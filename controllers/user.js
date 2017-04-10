@@ -1,23 +1,28 @@
 'use strict'
 
+// Cargamos fs y path para manejar archivos del sistema
 var fs = require('fs');
 var path = require('path');
+// Cargamos bcryps para encriptar la contraseña
 var bcrypt = require('bcrypt-nodejs');
+// Cargamos el modelo del Usuario
 var User = require('../models/user');
+// Importamos la configuración de JWT de services (Servicio de creación de Tokens)
 var jwt = require('../services/jwt');
 
 
+// Función de prueba simple
 function pruebas(req,res){
 	res.status(200).send({
 		message: 'Probando una acción del controlador de usuario de la API'
 	});
 }
 
+
+// Función para guardar un determinado usuario
 function saveUser(req,res){
 	var user = new User();
-	
 	var params = req.body;
-	console.log('params', params);
 	user.name = params.name;
 	user.surname = params.surname;
 	user.email = params.email;
@@ -49,12 +54,12 @@ function saveUser(req,res){
 	}
 }
 
+// Función de login
 function loginUser(req,res){
 	var params = req.body;
-	
 	var email = params.email;
 	var password = params.password;
-
+	// Utilizamos mongoose para solicitar el usuario
 	User.findOne({email: email.toLowerCase()},(err,user) =>{
 		if(err){
 			res.status(500).send({message: 'Error en la petición' });
@@ -62,14 +67,17 @@ function loginUser(req,res){
 			if(!user){
 				res.status(404).send({message: 'El usuario no existe'});
 			}else{
+				//comparamos la contraseña enviada con la almacenada
 				bcrypt.compare(password, user.password,function(err,check){
 					if(check){
+						// si se solicia el hash lo enviamos
 						if(params.gethash){
 							//devolvemos un TOKEN de JWT
 							res.status(200).send({
 								token: jwt.createToken(user)
 							});
 						}else{
+							//devolvemos los datos del usuario
 							res.status(200).send({user});
 						}
 					}else{
@@ -82,6 +90,7 @@ function loginUser(req,res){
 
 }
 
+// Función para actualizar un usuario
 function updateUser(req,res){
 	var userId = req.params.id;
 	var update = req.body;
@@ -99,6 +108,7 @@ function updateUser(req,res){
 	});
 }
 
+//Subir una imagen
 function uploadImage(req,res){
 	var userId = req.params.id;
 	var file_name = 'No subido..';
@@ -126,6 +136,7 @@ function uploadImage(req,res){
 	} 
 }
 
+// Ocultar la ruta de una imagen en el servidor: POTENCIA LA SEGURIDAD
 function getImageFile(req,res){
 	var imageFile = req.params.imageFile;
 	var pathFile = './uploads/users/' + imageFile;
@@ -139,6 +150,7 @@ function getImageFile(req,res){
 
 }
 
+// Exportamos todas las funciones
 module.exports = {
 	pruebas,
 	saveUser,
